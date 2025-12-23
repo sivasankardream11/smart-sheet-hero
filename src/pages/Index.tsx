@@ -10,6 +10,7 @@ import {
   filterAdvancesByMonth,
   formatCurrency
 } from "@/utils/calculations";
+import { exportToExcel } from "@/utils/excelExport";
 import { StatCard } from "@/components/StatCard";
 import { ExpenseTable } from "@/components/ExpenseTable";
 import { AdvanceTable } from "@/components/AdvanceTable";
@@ -17,6 +18,7 @@ import { MonthlySummaryTable } from "@/components/MonthlySummaryTable";
 import { CategorySummaryChart } from "@/components/CategorySummaryChart";
 import { FilterBar } from "@/components/FilterBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { 
   Receipt, 
   Wallet, 
@@ -25,8 +27,10 @@ import {
   FileSpreadsheet,
   PiggyBank,
   BarChart3,
-  Calendar
+  Calendar,
+  Download
 } from "lucide-react";
+import { toast } from "sonner";
 
 const Index = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
@@ -56,6 +60,26 @@ const Index = () => {
   const overallAdvances = calculateTotalAdvances(advanceData);
   const overallBalance = overallAdvances - overallExpenses;
 
+  const handleDownloadExcel = () => {
+    try {
+      exportToExcel({
+        expenses: expenseData,
+        advances: advanceData,
+        monthlySummary,
+        categorySummary: calculateCategorySummary(expenseData),
+        totals: {
+          totalExpenses: overallExpenses,
+          totalAdvances: overallAdvances,
+          balance: overallBalance
+        }
+      });
+      toast.success("Excel file downloaded successfully!");
+    } catch (error) {
+      toast.error("Failed to download Excel file");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -70,9 +94,18 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Auto-calculated expense & advance dashboard</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            <span>Aug - Nov 2025</span>
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={handleDownloadExcel}
+              className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
+            >
+              <Download className="h-4 w-4" />
+              Download Excel
+            </Button>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>Aug - Nov 2025</span>
+            </div>
           </div>
         </div>
       </header>

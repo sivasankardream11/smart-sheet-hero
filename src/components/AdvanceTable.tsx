@@ -17,6 +17,7 @@ export const AdvanceTable = ({ advances }: AdvanceTableProps) => {
             <th className="px-4 py-3 text-left">Date</th>
             <th className="px-4 py-3 text-left">Person</th>
             <th className="px-4 py-3 text-right">Amount</th>
+            <th className="px-4 py-3 text-left">Notes</th>
           </tr>
         </thead>
         <tbody>
@@ -37,6 +38,9 @@ export const AdvanceTable = ({ advances }: AdvanceTableProps) => {
               <td className="px-4 py-3 table-cell-amount text-sm font-semibold text-success">
                 {formatCurrency(advance.amount)}
               </td>
+              <td className="px-4 py-3 text-sm text-muted-foreground">
+                {advance.notes || '-'}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -49,6 +53,7 @@ export const AdvanceTable = ({ advances }: AdvanceTableProps) => {
             <td className="px-4 py-3 table-cell-amount text-sm">
               {formatCurrency(total)}
             </td>
+            <td className="px-4 py-3"></td>
           </tr>
         </tfoot>
       </table>
