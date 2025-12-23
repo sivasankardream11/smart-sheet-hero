@@ -14,6 +14,7 @@ export interface AdvanceRecord {
   date: string;
   person: string;
   amount: number;
+  notes?: string;
 }
 
 export interface MonthlySummary {
@@ -488,11 +489,13 @@ export const expenseData: ExpenseRecord[] = [
 ];
 
 export const advanceData: AdvanceRecord[] = [
-  { id: 1, date: "2025-08-06", person: "Siva", amount: 50000 },
-  { id: 2, date: "2025-08-25", person: "Siva", amount: 20000 },
-  { id: 3, date: "2025-09-16", person: "Siva", amount: 40000 },
-  { id: 4, date: "2025-09-25", person: "Siva", amount: 30000 },
-  { id: 5, date: "2025-10-15", person: "Siva", amount: 35000 },
+  { id: 1, date: "2025-08-01", person: "Siva", amount: 14896, notes: "Previous Advance (Carried Forward)" },
+  { id: 2, date: "2025-08-06", person: "Siva", amount: 50000 },
+  { id: 3, date: "2025-08-25", person: "Siva", amount: 20000 },
+  { id: 4, date: "2025-09-06", person: "Siva", amount: 30000 },
+  { id: 5, date: "2025-09-16", person: "Siva", amount: 40000 },
+  { id: 6, date: "2025-09-25", person: "Siva", amount: 30000 },
+  { id: 7, date: "2025-10-15", person: "Siva", amount: 35000 },
 ];
 
 export const categories = [
