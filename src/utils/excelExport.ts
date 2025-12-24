@@ -10,6 +10,7 @@ interface ExportData {
   totals: {
     totalExpenses: number;
     totalAdvances: number;
+    returnableAdvances: number;
     balance: number;
   };
 }
@@ -264,7 +265,7 @@ export const exportToExcel = async (data: ExportData): Promise<void> => {
     properties: { tabColor: { argb: 'FF10B981' } }
   });
 
-  wsAdvances.mergeCells('A1:E1');
+  wsAdvances.mergeCells('A1:F1');
   const advanceTitle = wsAdvances.getCell('A1');
   advanceTitle.value = '💰 ADVANCE RECORDS';
   setTitleStyle(advanceTitle, COLORS.success);
@@ -272,9 +273,12 @@ export const exportToExcel = async (data: ExportData): Promise<void> => {
 
   wsAdvances.addRow([]);
 
-  const advanceHeaders = ['#', 'Date', 'Person', 'Amount (₹)', 'Notes'];
+  const advanceHeaders = ['#', 'Date', 'Person', 'Amount (₹)', 'Type', 'Notes'];
   const advanceHeaderRow = wsAdvances.addRow(advanceHeaders);
-  setHeaderStyle(advanceHeaderRow, 5);
+  setHeaderStyle(advanceHeaderRow, 6);
+
+  const regularAdvances = data.advances.filter(a => a.type === 'regular');
+  const returnableAdvancesList = data.advances.filter(a => a.type === 'returnable');
 
   data.advances.forEach((adv, idx) => {
     const row = wsAdvances.addRow([
@@ -282,31 +286,66 @@ export const exportToExcel = async (data: ExportData): Promise<void> => {
       formatDate(adv.date),
       adv.person,
       adv.amount,
+      adv.type === 'returnable' ? 'RETURNABLE' : 'REGULAR',
       adv.notes || '-'
     ]);
-    setDataRowStyle(row, 5, idx % 2 === 1);
+    setDataRowStyle(row, 6, idx % 2 === 1);
     
     row.getCell(4).numFmt = '₹#,##0';
     row.getCell(4).alignment = { vertical: 'middle', horizontal: 'right' };
     
-    // Highlight amount in green
-    row.getCell(4).font = { bold: true, color: COLORS.success, size: 10 };
+    // Highlight based on type
+    if (adv.type === 'returnable') {
+      row.getCell(4).font = { bold: true, color: COLORS.warning, size: 10 };
+      row.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: COLORS.warningLight };
+      row.getCell(5).font = { bold: true, color: COLORS.warning, size: 10 };
+      row.getCell(5).alignment = { horizontal: 'center' };
+    } else {
+      row.getCell(4).font = { bold: true, color: COLORS.success, size: 10 };
+      row.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: COLORS.successLight };
+      row.getCell(5).font = { bold: true, color: COLORS.success, size: 10 };
+      row.getCell(5).alignment = { horizontal: 'center' };
+    }
   });
 
   wsAdvances.addRow([]);
 
-  const totalAdvanceRow = wsAdvances.addRow([
-    '', '', 'TOTAL ADVANCES', data.totals.totalAdvances, ''
+  // Regular advances total
+  const regularTotal = regularAdvances.reduce((sum, a) => sum + a.amount, 0);
+  const regularAdvRow = wsAdvances.addRow([
+    '', '', 'REGULAR ADVANCES', regularTotal, '', ''
   ]);
-  setTotalRowStyle(totalAdvanceRow, 5);
+  regularAdvRow.height = 24;
+  regularAdvRow.getCell(3).font = { bold: true, size: 10, color: COLORS.slate700 };
+  regularAdvRow.getCell(4).numFmt = '₹#,##0';
+  regularAdvRow.getCell(4).font = { bold: true, color: COLORS.success, size: 11 };
+  regularAdvRow.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: COLORS.successLight };
+
+  // Returnable advances total
+  const returnableTotal = returnableAdvancesList.reduce((sum, a) => sum + a.amount, 0);
+  const returnableAdvRow = wsAdvances.addRow([
+    '', '', 'RETURNABLE ADVANCES', returnableTotal, '(Not Counted)', ''
+  ]);
+  returnableAdvRow.height = 24;
+  returnableAdvRow.getCell(3).font = { bold: true, size: 10, color: COLORS.slate700 };
+  returnableAdvRow.getCell(4).numFmt = '₹#,##0';
+  returnableAdvRow.getCell(4).font = { bold: true, color: COLORS.warning, size: 11 };
+  returnableAdvRow.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: COLORS.warningLight };
+  returnableAdvRow.getCell(5).font = { italic: true, size: 9, color: COLORS.slate600 };
+
+  // Grand total
+  const totalAdvanceRow = wsAdvances.addRow([
+    '', '', 'GRAND TOTAL', regularTotal + returnableTotal, '', ''
+  ]);
+  setTotalRowStyle(totalAdvanceRow, 6);
   totalAdvanceRow.getCell(4).numFmt = '₹#,##0';
-  totalAdvanceRow.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: COLORS.success };
 
   wsAdvances.columns = [
     { width: 6 },
     { width: 14 },
     { width: 15 },
     { width: 15 },
+    { width: 14 },
     { width: 40 }
   ];
 
@@ -515,10 +554,16 @@ export const exportToExcel = async (data: ExportData): Promise<void> => {
   fin1.getCell(2).numFmt = '₹#,##0';
   fin1.getCell(2).font = { bold: true, color: COLORS.danger, size: 11 };
 
-  const fin2 = wsDashboard.addRow(['Total Advances', data.totals.totalAdvances, '', '']);
+  const fin2 = wsDashboard.addRow(['Total Advances (Regular)', data.totals.totalAdvances, '', '']);
   setDataRowStyle(fin2, 2, true);
   fin2.getCell(2).numFmt = '₹#,##0';
   fin2.getCell(2).font = { bold: true, color: COLORS.success, size: 11 };
+
+  const fin2b = wsDashboard.addRow(['Room Advance (Returnable)', data.totals.returnableAdvances, '', '']);
+  setDataRowStyle(fin2b, 2, false);
+  fin2b.getCell(2).numFmt = '₹#,##0';
+  fin2b.getCell(2).font = { bold: true, color: COLORS.warning, size: 11 };
+  fin2b.getCell(1).font = { italic: true, size: 10, color: COLORS.slate600 };
 
   const fin3 = wsDashboard.addRow(['Current Balance', data.totals.balance, '', '']);
   fin3.getCell(1).font = { bold: true, size: 11 };
