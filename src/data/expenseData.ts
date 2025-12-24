@@ -18,12 +18,22 @@ export interface AdvanceRecord {
   type: 'regular' | 'returnable';
 }
 
+export interface HRPayment {
+  id: number;
+  date: string;
+  month: string;
+  amount: number;
+  notes?: string;
+}
+
 export interface MonthlySummary {
   month: string;
   totalExpenses: number;
   totalAdvances: number;
   balance: number;
-  status: 'ADVANCE LEFT' | 'EXPENSE EXCEEDED' | 'BALANCED';
+  hrPaid: number;
+  carryForward: number;
+  status: 'ADVANCE LEFT' | 'EXPENSE EXCEEDED' | 'BALANCED' | 'CLEARED BY HR';
 }
 
 export interface CategorySummary {
@@ -498,6 +508,10 @@ export const advanceData: AdvanceRecord[] = [
   { id: 6, date: "2025-09-25", person: "Siva", amount: 30000, type: "regular" },
   { id: 7, date: "2025-10-15", person: "Siva", amount: 35000, type: "regular" },
   { id: 8, date: "2025-08-15", person: "Siva", amount: 40000, notes: "Room Advance (Returnable)", type: "returnable" },
+];
+
+export const hrPaymentsData: HRPayment[] = [
+  // Add HR payments here when balance is cleared
 ];
 
 export const categories = [
