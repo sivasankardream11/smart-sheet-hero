@@ -60,9 +60,9 @@ const Index = () => {
   const overallAdvances = calculateTotalAdvances(advanceData);
   const overallBalance = overallAdvances - overallExpenses;
 
-  const handleDownloadExcel = () => {
+  const handleDownloadExcel = async () => {
     try {
-      exportToExcel({
+      await exportToExcel({
         expenses: expenseData,
         advances: advanceData,
         monthlySummary,
@@ -73,7 +73,7 @@ const Index = () => {
           balance: overallBalance
         }
       });
-      toast.success("Excel file downloaded successfully!");
+      toast.success("Colorful Excel file downloaded successfully!");
     } catch (error) {
       toast.error("Failed to download Excel file");
       console.error(error);
