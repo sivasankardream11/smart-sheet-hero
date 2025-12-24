@@ -1,4 +1,4 @@
-import { ExpenseRecord, AdvanceRecord, MonthlySummary, CategorySummary } from '@/data/expenseData';
+import { ExpenseRecord, AdvanceRecord, MonthlySummary, CategorySummary, HRPayment } from '@/data/expenseData';
 
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-IN', {
@@ -61,19 +61,26 @@ export const calculateCategorySummary = (expenses: ExpenseRecord[]): CategorySum
 
 export const calculateMonthlySummary = (
   expenses: ExpenseRecord[],
-  advances: AdvanceRecord[]
+  advances: AdvanceRecord[],
+  hrPayments: HRPayment[] = []
 ): MonthlySummary[] => {
   const monthlyExpenses = new Map<string, number>();
   const monthlyAdvances = new Map<string, number>();
+  const monthlyHRPayments = new Map<string, number>();
 
   expenses.forEach(expense => {
     const month = getMonthFromDate(expense.date);
     monthlyExpenses.set(month, (monthlyExpenses.get(month) || 0) + expense.amount);
   });
 
+  // Include ALL advances (both regular and returnable) for balance
   advances.forEach(advance => {
     const month = getMonthFromDate(advance.date);
     monthlyAdvances.set(month, (monthlyAdvances.get(month) || 0) + advance.amount);
+  });
+
+  hrPayments.forEach(payment => {
+    monthlyHRPayments.set(payment.month, (monthlyHRPayments.get(payment.month) || 0) + payment.amount);
   });
 
   const allMonths = new Set([...monthlyExpenses.keys(), ...monthlyAdvances.keys()]);
@@ -90,28 +97,40 @@ export const calculateMonthlySummary = (
     })
     .map(month => {
       const totalExpenses = monthlyExpenses.get(month) || 0;
-      const totalAdvances = (monthlyAdvances.get(month) || 0) + carryForward;
-      const balance = totalAdvances - totalExpenses;
+      const monthAdvances = monthlyAdvances.get(month) || 0;
+      const totalAdvances = monthAdvances + carryForward;
+      const hrPaid = monthlyHRPayments.get(month) || 0;
+      const balance = totalAdvances - totalExpenses + hrPaid;
       
-      let status: 'ADVANCE LEFT' | 'EXPENSE EXCEEDED' | 'BALANCED';
-      if (balance > 0) {
+      let status: 'ADVANCE LEFT' | 'EXPENSE EXCEEDED' | 'BALANCED' | 'CLEARED BY HR';
+      let newCarryForward = 0;
+      
+      if (hrPaid > 0 && Math.abs(balance) < 100) {
+        status = 'CLEARED BY HR';
+        newCarryForward = 0;
+      } else if (balance > 0) {
         status = 'ADVANCE LEFT';
-        carryForward = balance;
+        newCarryForward = balance;
       } else if (balance < 0) {
         status = 'EXPENSE EXCEEDED';
-        carryForward = 0;
+        newCarryForward = balance; // Carry forward negative balance
       } else {
         status = 'BALANCED';
-        carryForward = 0;
+        newCarryForward = 0;
       }
 
-      return {
+      const result = {
         month,
         totalExpenses,
         totalAdvances,
         balance: Math.abs(balance),
+        hrPaid,
+        carryForward: newCarryForward,
         status,
       };
+      
+      carryForward = newCarryForward;
+      return result;
     });
 };
 

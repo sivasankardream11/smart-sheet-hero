@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { expenseData, advanceData } from "@/data/expenseData";
+import { expenseData as initialExpenseData, advanceData as initialAdvanceData, hrPaymentsData as initialHRPayments, ExpenseRecord, AdvanceRecord, HRPayment } from "@/data/expenseData";
 import { 
   calculateTotalExpenses, 
   calculateTotalAdvances, 
@@ -18,6 +18,9 @@ import { AdvanceTable } from "@/components/AdvanceTable";
 import { MonthlySummaryTable } from "@/components/MonthlySummaryTable";
 import { CategorySummaryChart } from "@/components/CategorySummaryChart";
 import { FilterBar } from "@/components/FilterBar";
+import { AddExpenseDialog } from "@/components/AddExpenseDialog";
+import { AddAdvanceDialog } from "@/components/AddAdvanceDialog";
+import { AddHRPaymentDialog } from "@/components/AddHRPaymentDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { 
@@ -34,44 +37,73 @@ import {
 import { toast } from "sonner";
 
 const Index = () => {
+  const [expenses, setExpenses] = useState<ExpenseRecord[]>(initialExpenseData);
+  const [advances, setAdvances] = useState<AdvanceRecord[]>(initialAdvanceData);
+  const [hrPayments, setHRPayments] = useState<HRPayment[]>(initialHRPayments);
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   // Apply filters
   const filteredExpenses = useMemo(() => {
-    let result = expenseData;
+    let result = expenses;
     result = filterExpensesByMonth(result, selectedMonth);
     result = filterExpensesByCategory(result, selectedCategory);
     return result;
-  }, [selectedMonth, selectedCategory]);
+  }, [expenses, selectedMonth, selectedCategory]);
 
   const filteredAdvances = useMemo(() => {
-    return filterAdvancesByMonth(advanceData, selectedMonth);
-  }, [selectedMonth]);
+    return filterAdvancesByMonth(advances, selectedMonth);
+  }, [advances, selectedMonth]);
 
-  // Calculate summaries
+  // Calculate summaries - now including ALL advances (regular + returnable)
   const totalExpenses = calculateTotalExpenses(filteredExpenses);
-  const totalAdvances = calculateTotalAdvances(filteredAdvances, false); // Exclude returnable
+  const totalAdvances = calculateTotalAdvances(filteredAdvances, true); // Include all
   const balance = totalAdvances - totalExpenses;
   const categorySummary = calculateCategorySummary(filteredExpenses);
-  const monthlySummary = calculateMonthlySummary(expenseData, advanceData);
+  const monthlySummary = calculateMonthlySummary(expenses, advances, hrPayments);
 
-  // Overall totals
-  const overallExpenses = calculateTotalExpenses(expenseData);
-  const overallAdvances = calculateTotalAdvances(advanceData, false); // Exclude returnable for balance calc
-  const returnableAdvances = calculateReturnableAdvances(advanceData);
-  const overallBalance = overallAdvances - overallExpenses;
+  // Overall totals - include ALL advances
+  const overallExpenses = calculateTotalExpenses(expenses);
+  const overallAdvances = calculateTotalAdvances(advances, true); // Include all for balance
+  const returnableAdvances = calculateReturnableAdvances(advances);
+  const regularAdvances = calculateTotalAdvances(advances, false);
+  const totalHRPayments = hrPayments.reduce((sum, p) => sum + p.amount, 0);
+  const overallBalance = overallAdvances + totalHRPayments - overallExpenses;
+
+  const handleAddExpense = (expenseData: Omit<ExpenseRecord, 'id'>) => {
+    const newExpense: ExpenseRecord = {
+      id: expenses.length + 1,
+      ...expenseData
+    };
+    setExpenses([...expenses, newExpense]);
+  };
+
+  const handleAddAdvance = (advanceData: Omit<AdvanceRecord, 'id'>) => {
+    const newAdvance: AdvanceRecord = {
+      id: advances.length + 1,
+      ...advanceData
+    };
+    setAdvances([...advances, newAdvance]);
+  };
+
+  const handleAddHRPayment = (paymentData: Omit<HRPayment, 'id'>) => {
+    const newPayment: HRPayment = {
+      id: hrPayments.length + 1,
+      ...paymentData
+    };
+    setHRPayments([...hrPayments, newPayment]);
+  };
 
   const handleDownloadExcel = async () => {
     try {
       await exportToExcel({
-        expenses: expenseData,
-        advances: advanceData,
+        expenses,
+        advances,
         monthlySummary,
-        categorySummary: calculateCategorySummary(expenseData),
+        categorySummary: calculateCategorySummary(expenses),
         totals: {
           totalExpenses: overallExpenses,
-          totalAdvances: overallAdvances,
+          totalAdvances: regularAdvances,
           returnableAdvances: returnableAdvances,
           balance: overallBalance
         }
@@ -97,7 +129,10 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Auto-calculated expense & advance dashboard</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <AddExpenseDialog onAdd={handleAddExpense} />
+            <AddAdvanceDialog onAdd={handleAddAdvance} />
+            <AddHRPaymentDialog pendingBalance={overallBalance} onAdd={handleAddHRPayment} />
             <Button 
               onClick={handleDownloadExcel}
               className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
@@ -105,7 +140,7 @@ const Index = () => {
               <Download className="h-4 w-4" />
               Download Excel
             </Button>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground ml-2">
               <Calendar className="h-4 w-4" />
               <span>Aug - Nov 2025</span>
             </div>
@@ -119,27 +154,27 @@ const Index = () => {
           <StatCard
             title="Total Expenses"
             value={formatCurrency(overallExpenses)}
-            subtitle={`${expenseData.length} transactions`}
+            subtitle={`${expenses.length} transactions`}
             icon={<Receipt className="h-5 w-5 text-destructive" />}
             variant="destructive"
           />
           <StatCard
             title="Total Advances"
             value={formatCurrency(overallAdvances)}
-            subtitle={`${advanceData.filter(a => a.type === 'regular').length} advances received`}
+            subtitle={`₹${regularAdvances.toLocaleString('en-IN')} regular + ₹${returnableAdvances.toLocaleString('en-IN')} returnable`}
             icon={<Wallet className="h-5 w-5 text-success" />}
             variant="success"
           />
           <StatCard
             title="Room Advance"
             value={formatCurrency(returnableAdvances)}
-            subtitle="Returnable (not counted)"
+            subtitle="Returnable (included in balance)"
             icon={<PiggyBank className="h-5 w-5 text-warning" />}
             variant="warning"
           />
           <StatCard
             title="Current Balance"
-            value={formatCurrency(Math.abs(overallBalance))}
+            value={`${overallBalance < 0 ? '-' : ''}${formatCurrency(Math.abs(overallBalance))}`}
             subtitle={overallBalance >= 0 ? "Advance remaining" : "Expense exceeded"}
             icon={<TrendingUp className="h-5 w-5 text-primary" />}
             variant={overallBalance >= 0 ? "primary" : "destructive"}
@@ -209,7 +244,7 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Expense Records</h2>
               <span className="text-sm text-muted-foreground">
-                Showing {filteredExpenses.length} of {expenseData.length} records
+                Showing {filteredExpenses.length} of {expenses.length} records
               </span>
             </div>
             <ExpenseTable expenses={filteredExpenses} />
@@ -222,7 +257,7 @@ const Index = () => {
                 {filteredAdvances.length} advances
               </span>
             </div>
-            <div className="max-w-2xl">
+            <div className="max-w-3xl">
               <AdvanceTable advances={filteredAdvances} />
             </div>
           </TabsContent>
@@ -230,8 +265,7 @@ const Index = () => {
           <TabsContent value="monthly" className="space-y-4">
             <h2 className="text-lg font-semibold">Monthly Summary</h2>
             <p className="text-sm text-muted-foreground">
-              Note: Pending advances are carried forward to the next month. 
-              Carried-forward advances are deducted from total expenses.
+              Balance carries forward monthly. If HR pays the pending balance, it clears. Otherwise, negative balance carries forward.
             </p>
             <MonthlySummaryTable summaries={monthlySummary} />
           </TabsContent>
@@ -278,7 +312,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t mt-8">
         <div className="container px-4 py-4 text-center text-sm text-muted-foreground">
-          <p>Expense & Advance Dashboard • Auto-calculated from {expenseData.length} expense records</p>
+          <p>Expense & Advance Dashboard • Auto-calculated from {expenses.length} expense records</p>
         </div>
       </footer>
     </div>
