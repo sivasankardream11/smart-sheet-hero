@@ -28,8 +28,13 @@ export const calculateTotalExpenses = (expenses: ExpenseRecord[]): number => {
   return expenses.reduce((sum, expense) => sum + expense.amount, 0);
 };
 
-export const calculateTotalAdvances = (advances: AdvanceRecord[]): number => {
-  return advances.reduce((sum, advance) => sum + advance.amount, 0);
+export const calculateTotalAdvances = (advances: AdvanceRecord[], includeReturnable: boolean = true): number => {
+  const filtered = includeReturnable ? advances : advances.filter(a => a.type === 'regular');
+  return filtered.reduce((sum, advance) => sum + advance.amount, 0);
+};
+
+export const calculateReturnableAdvances = (advances: AdvanceRecord[]): number => {
+  return advances.filter(a => a.type === 'returnable').reduce((sum, a) => sum + a.amount, 0);
 };
 
 export const calculateCategorySummary = (expenses: ExpenseRecord[]): CategorySummary[] => {

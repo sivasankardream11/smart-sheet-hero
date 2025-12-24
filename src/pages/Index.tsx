@@ -3,6 +3,7 @@ import { expenseData, advanceData } from "@/data/expenseData";
 import { 
   calculateTotalExpenses, 
   calculateTotalAdvances, 
+  calculateReturnableAdvances,
   calculateCategorySummary, 
   calculateMonthlySummary,
   filterExpensesByMonth,
@@ -50,14 +51,15 @@ const Index = () => {
 
   // Calculate summaries
   const totalExpenses = calculateTotalExpenses(filteredExpenses);
-  const totalAdvances = calculateTotalAdvances(filteredAdvances);
+  const totalAdvances = calculateTotalAdvances(filteredAdvances, false); // Exclude returnable
   const balance = totalAdvances - totalExpenses;
   const categorySummary = calculateCategorySummary(filteredExpenses);
   const monthlySummary = calculateMonthlySummary(expenseData, advanceData);
 
   // Overall totals
   const overallExpenses = calculateTotalExpenses(expenseData);
-  const overallAdvances = calculateTotalAdvances(advanceData);
+  const overallAdvances = calculateTotalAdvances(advanceData, false); // Exclude returnable for balance calc
+  const returnableAdvances = calculateReturnableAdvances(advanceData);
   const overallBalance = overallAdvances - overallExpenses;
 
   const handleDownloadExcel = async () => {
@@ -70,6 +72,7 @@ const Index = () => {
         totals: {
           totalExpenses: overallExpenses,
           totalAdvances: overallAdvances,
+          returnableAdvances: returnableAdvances,
           balance: overallBalance
         }
       });
@@ -112,7 +115,7 @@ const Index = () => {
 
       <main className="container px-4 py-6 space-y-6">
         {/* Overall Stats */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
             title="Total Expenses"
             value={formatCurrency(overallExpenses)}
@@ -123,16 +126,23 @@ const Index = () => {
           <StatCard
             title="Total Advances"
             value={formatCurrency(overallAdvances)}
-            subtitle={`${advanceData.length} advances received`}
+            subtitle={`${advanceData.filter(a => a.type === 'regular').length} advances received`}
             icon={<Wallet className="h-5 w-5 text-success" />}
             variant="success"
+          />
+          <StatCard
+            title="Room Advance"
+            value={formatCurrency(returnableAdvances)}
+            subtitle="Returnable (not counted)"
+            icon={<PiggyBank className="h-5 w-5 text-warning" />}
+            variant="warning"
           />
           <StatCard
             title="Current Balance"
             value={formatCurrency(Math.abs(overallBalance))}
             subtitle={overallBalance >= 0 ? "Advance remaining" : "Expense exceeded"}
             icon={<TrendingUp className="h-5 w-5 text-primary" />}
-            variant={overallBalance >= 0 ? "primary" : "warning"}
+            variant={overallBalance >= 0 ? "primary" : "destructive"}
           />
           <StatCard
             title="Avg Daily Expense"
