@@ -216,6 +216,13 @@ export const exportToExcel = async (data: ExportData): Promise<void> => {
 
   // Data rows
   data.expenses.forEach((exp, idx) => {
+    // Check if bill is a URL or data URL
+    const billValue = exp.bill && exp.bill !== '' 
+      ? (exp.bill.startsWith('http') || exp.bill.startsWith('data:')) 
+        ? 'View Bill' 
+        : exp.bill 
+      : '-';
+    
     const row = wsExpenses.addRow([
       idx + 1,
       formatDate(exp.date),
@@ -223,7 +230,7 @@ export const exportToExcel = async (data: ExportData): Promise<void> => {
       exp.amount,
       exp.category.toUpperCase(),
       exp.paidBy,
-      exp.bill || '-',
+      billValue,
       exp.notes || '-'
     ]);
     setDataRowStyle(row, 8, idx % 2 === 1);
@@ -236,6 +243,31 @@ export const exportToExcel = async (data: ExportData): Promise<void> => {
     const amountCell = row.getCell(4);
     amountCell.numFmt = '₹#,##0';
     amountCell.alignment = { vertical: 'middle', horizontal: 'right' };
+
+    // Add hyperlink for bill if it's a URL
+    if (exp.bill && (exp.bill.startsWith('http'))) {
+      const billCell = row.getCell(7);
+      billCell.value = {
+        text: '📎 View Bill',
+        hyperlink: exp.bill,
+      };
+      billCell.font = { 
+        color: { argb: 'FF0066CC' }, 
+        underline: true, 
+        size: 10,
+        name: 'Calibri'
+      };
+    } else if (exp.bill && exp.bill.startsWith('data:')) {
+      // For data URLs (uploaded images), show indicator
+      const billCell = row.getCell(7);
+      billCell.value = '📷 Image';
+      billCell.font = { 
+        color: { argb: 'FF10B981' }, 
+        bold: true,
+        size: 10,
+        name: 'Calibri'
+      };
+    }
   });
 
   // Empty row before total
