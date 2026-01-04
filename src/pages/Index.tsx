@@ -168,7 +168,7 @@ const Index = () => {
           <StatCard
             title="Hardware Total"
             value={formatCurrency(hardwareTotal)}
-            subtitle={`${hardwareExpenses.length} items (separate)`}
+            subtitle={`${hardwareExpenses.length} items`}
             icon={<BarChart3 className="h-5 w-5 text-orange-500" />}
             variant="warning"
           />
