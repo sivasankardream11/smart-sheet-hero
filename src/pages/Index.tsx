@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { expenseData as initialExpenseData, advanceData as initialAdvanceData, hrPaymentsData as initialHRPayments, ExpenseRecord, AdvanceRecord, HRPayment } from "@/data/expenseData";
+import { expenseDataCombined as initialExpenseData, advanceData as initialAdvanceData, hrPaymentsData as initialHRPayments, ExpenseRecord, AdvanceRecord, HRPayment } from "@/data/expenseData";
 import { 
   calculateTotalExpenses, 
   calculateTotalAdvances, 
@@ -142,7 +142,7 @@ const Index = () => {
             </Button>
             <div className="flex items-center gap-2 text-sm text-muted-foreground ml-2">
               <Calendar className="h-4 w-4" />
-              <span>Aug - Nov 2025</span>
+              <span>Aug - Dec 2025</span>
             </div>
           </div>
         </div>

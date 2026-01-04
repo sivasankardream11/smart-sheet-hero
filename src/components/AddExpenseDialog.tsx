@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Upload, X, Image } from "lucide-react";
 import { categories } from "@/data/expenseData";
 import { toast } from "sonner";
 
@@ -28,7 +28,31 @@ export const AddExpenseDialog = ({ onAdd }: AddExpenseDialogProps) => {
   const [category, setCategory] = useState("food");
   const [paidBy, setPaidBy] = useState("siva");
   const [bill, setBill] = useState("");
+  const [billPreview, setBillPreview] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Create a data URL for preview and storage
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setBill(dataUrl);
+        setBillPreview(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearBillImage = () => {
+    setBill("");
+    setBillPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +75,11 @@ export const AddExpenseDialog = ({ onAdd }: AddExpenseDialogProps) => {
     setDescription("");
     setAmount("");
     setBill("");
+    setBillPreview(null);
     setNotes("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -126,25 +154,65 @@ export const AddExpenseDialog = ({ onAdd }: AddExpenseDialogProps) => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="bill">Bill</Label>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Input
+              id="notes"
+              placeholder="Optional notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Bill / GST Bill / Image (Optional)</Label>
+            <div className="flex gap-2">
               <Input
-                id="bill"
-                placeholder="cash/upi"
-                value={bill}
-                onChange={(e) => setBill(e.target.value)}
+                type="text"
+                placeholder="Enter URL or upload image"
+                value={billPreview ? "Image uploaded" : bill}
+                onChange={(e) => {
+                  setBill(e.target.value);
+                  setBillPreview(null);
+                }}
+                disabled={!!billPreview}
+                className="flex-1"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Input
-                id="notes"
-                placeholder="Optional notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
               />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+              {(bill || billPreview) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={clearBillImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
+            {billPreview && (
+              <div className="relative mt-2">
+                <img 
+                  src={billPreview} 
+                  alt="Bill preview" 
+                  className="w-full max-h-32 object-contain rounded border"
+                />
+              </div>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

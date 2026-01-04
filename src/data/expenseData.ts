@@ -499,6 +499,38 @@ export const expenseData: ExpenseRecord[] = [
   { id: 450, date: "2025-11-30", description: "laundry", amount: 390, category: "rent", paidBy: "siva", bill: "", notes: "" },
 ];
 
+// December 2025 entries
+export const decemberExpenses: ExpenseRecord[] = [
+  { id: 451, date: "2025-12-01", description: "auto", amount: 200, category: "travel", paidBy: "siva", bill: "", notes: "" },
+  { id: 452, date: "2025-12-01", description: "breakfast for 3", amount: 210, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 453, date: "2025-12-01", description: "lunch for 3", amount: 1120, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 454, date: "2025-12-01", description: "hardware", amount: 230, category: "hardware", paidBy: "siva", bill: "", notes: "" },
+  { id: 455, date: "2025-12-01", description: "dinner for 4", amount: 570, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 456, date: "2025-12-02", description: "breakfast for 4", amount: 1120, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 457, date: "2025-12-02", description: "auto", amount: 150, category: "travel", paidBy: "siva", bill: "", notes: "" },
+  { id: 458, date: "2025-12-02", description: "auto", amount: 150, category: "travel", paidBy: "siva", bill: "", notes: "" },
+  { id: 459, date: "2025-12-03", description: "breakfast for 4", amount: 310, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 460, date: "2025-12-03", description: "hardware 3pin socket 4 qty", amount: 340, category: "hardware", paidBy: "siva", bill: "", notes: "" },
+  { id: 461, date: "2025-12-03", description: "hardware 2 core wire", amount: 180, category: "hardware", paidBy: "siva", bill: "", notes: "" },
+  { id: 462, date: "2025-12-03", description: "auto", amount: 200, category: "travel", paidBy: "siva", bill: "", notes: "" },
+  { id: 463, date: "2025-12-03", description: "lunch for 3", amount: 670, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 464, date: "2025-12-03", description: "hardware gum", amount: 270, category: "hardware", paidBy: "siva", bill: "", notes: "" },
+  { id: 465, date: "2025-12-05", description: "dinner", amount: 150, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 466, date: "2025-12-06", description: "dinner", amount: 200, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 467, date: "2025-12-07", description: "auto", amount: 200, category: "travel", paidBy: "siva", bill: "", notes: "" },
+  { id: 468, date: "2025-12-08", description: "lunch for 4", amount: 810, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 469, date: "2025-12-12", description: "hardware thread lock", amount: 200, category: "hardware", paidBy: "siva", bill: "", notes: "" },
+  { id: 470, date: "2025-12-12", description: "auto", amount: 150, category: "travel", paidBy: "siva", bill: "", notes: "" },
+  { id: 471, date: "2025-12-12", description: "breakfast", amount: 70, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 472, date: "2025-12-12", description: "lunch for 2", amount: 570, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 473, date: "2025-12-12", description: "auto", amount: 150, category: "travel", paidBy: "siva", bill: "", notes: "" },
+  { id: 474, date: "2025-12-13", description: "dinner", amount: 220, category: "food", paidBy: "siva", bill: "", notes: "" },
+  { id: 475, date: "2025-12-28", description: "auto", amount: 150, category: "travel", paidBy: "siva", bill: "", notes: "" },
+];
+
+// Combined expense data
+export const expenseDataCombined: ExpenseRecord[] = [...expenseData, ...decemberExpenses];
+
 export const advanceData: AdvanceRecord[] = [
   { id: 1, date: "2025-08-01", person: "Siva", amount: 14896, notes: "Previous Advance (Carried Forward)", type: "regular" },
   { id: 2, date: "2025-08-06", person: "Siva", amount: 50000, type: "regular" },
@@ -520,5 +552,5 @@ export const categories = [
 ];
 
 export const months = [
-  'Aug-2025', 'Sep-2025', 'Oct-2025', 'Nov-2025'
+  'Aug-2025', 'Sep-2025', 'Oct-2025', 'Nov-2025', 'Dec-2025'
 ];
