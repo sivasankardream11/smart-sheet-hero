@@ -70,6 +70,13 @@ const Index = () => {
   const totalHRPayments = hrPayments.reduce((sum, p) => sum + p.amount, 0);
   const overallBalance = overallAdvances + totalHRPayments - overallExpenses;
 
+  // Hardware total and average daily expense (excluding hardware) over 153 days (Aug 1 - Dec 31, 2025)
+  const TOTAL_DAYS = 153;
+  const hardwareExpenses = expenses.filter(e => e.category.toLowerCase() === 'hardware');
+  const hardwareTotal = hardwareExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const expensesWithoutHardware = overallExpenses - hardwareTotal;
+  const avgDailyExpenseWithoutHardware = Math.round(expensesWithoutHardware / TOTAL_DAYS);
+
   const handleAddExpense = (expenseData: Omit<ExpenseRecord, 'id'>) => {
     const newExpense: ExpenseRecord = {
       id: expenses.length + 1,
@@ -150,13 +157,20 @@ const Index = () => {
 
       <main className="container px-4 py-6 space-y-6">
         {/* Overall Stats */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <StatCard
             title="Total Expenses"
             value={formatCurrency(overallExpenses)}
             subtitle={`${expenses.length} transactions`}
             icon={<Receipt className="h-5 w-5 text-destructive" />}
             variant="destructive"
+          />
+          <StatCard
+            title="Hardware Total"
+            value={formatCurrency(hardwareTotal)}
+            subtitle={`${hardwareExpenses.length} items (separate)`}
+            icon={<BarChart3 className="h-5 w-5 text-orange-500" />}
+            variant="warning"
           />
           <StatCard
             title="Total Advances"
@@ -180,9 +194,9 @@ const Index = () => {
             variant={overallBalance >= 0 ? "primary" : "destructive"}
           />
           <StatCard
-            title="Avg Daily Expense"
-            value={formatCurrency(Math.round(overallExpenses / 122))}
-            subtitle="~122 days tracked"
+            title="Avg Daily (No Hardware)"
+            value={formatCurrency(avgDailyExpenseWithoutHardware)}
+            subtitle={`${TOTAL_DAYS} days (Aug 1 - Dec 31)`}
             icon={<Calculator className="h-5 w-5 text-muted-foreground" />}
           />
         </section>
